@@ -1,16 +1,37 @@
 language: ruby
 
+bundler_args: --with-development-dependencies --jobs=3 --retry=3 --verbose
+
+cache:
+  bundler: true
+
+matrix:
+  fast_finish: true
+
 rvm:
   - 1.9.3
   - 2.0.0
-  - 2.1.0
+  - 2.1.8
+  - 2.2.4
 
 gemfile:
   - gemfiles/Gemfile.rails-3.x
   - gemfiles/Gemfile.rails-4.x
 
+# Set up for STOMP tests
+services:
+  - rabbitmq
+
+before_install:
+  - gem update bundler
+
+install:
+  - sudo rabbitmq-plugins enable rabbitmq_web_stomp
+  - sudo service rabbitmq-server restart
+
 # Set up and start Faye Server before tests are run
 before_script:
+  - bundle install
   - cp test/travis/sync.yml config/sync.yml
   - cp test/travis/sync.ru sync.ru
   - thin start -R sync.ru -p 9292 -t 1 2>&1 > test.log &

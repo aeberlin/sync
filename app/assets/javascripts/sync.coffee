@@ -6,14 +6,16 @@ $ = jQuery
   readyQueue: []
 
   init: ->
+    return unless SyncConfig? && Sync[SyncConfig.adapter]
+    @adapter ||= new Sync[SyncConfig.adapter]
+
     $ =>
-      return unless SyncConfig? && Sync[SyncConfig.adapter]
-      @adapter ||= new Sync[SyncConfig.adapter]
-      return if @isReady() || !@adapter.available()
-      @ready = true
-      @connect()
-      @flushReadyQueue()
-      @bindUnsubscribe()
+      onReadyInterval = setInterval (=>
+        return if @isReady() || !@adapter.available()
+        clearInterval(onReadyInterval)
+        @ready = true
+        @connect()
+      ), 250
 
 
   # Handle Turbolinks teardown, unsubscribe from all channels before transition
@@ -30,15 +32,27 @@ $ = jQuery
 
   onConnectFailure: (error) -> #noop
 
-  connect: -> @adapter.connect()
+  connect: ->
+    @adapter.connect()
+
+    onConnectInterval = setInterval (=>
+      return unless @isConnected()
+      clearInterval(onConnectInterval)
+      @adapter.onConnect()
+    ), 250
 
   isConnected: -> @adapter.isConnected()
 
-  onReady: (callback) ->
-    if @isReady()
-      callback()
-    else
-      @readyQueue.push callback
+  onDebug: (message) ->
+    window?.console?.log(message)
+
+  onReady: (callbacks) ->
+    callbackOrAddToQueue = (callback) =>
+      return callback() if @isReady()
+      @readyQueue.push(callback)
+
+    return callbackOrAddToQueue(callbacks) unless callbacks.constructor == Array
+    callbackOrAddToQueue(callback) for callback in callbacks
 
 
   flushReadyQueue: ->
@@ -89,14 +103,23 @@ class Sync.Adapter
       return
 
   subscribe: (channel, callback) ->
-    @unsubscribeChannel(channel)
-    subscription = new Sync[SyncConfig.adapter].Subscription(@client, channel, callback)
-    @subscriptions.push(subscription)
-    subscription
+    onReadyCallback = (channel, callback) =>
+      @unsubscribeChannel(channel)
+      subscription = new Sync[SyncConfig.adapter].Subscription(@client, channel, callback)
+      @subscriptions.push(subscription)
+      subscription
+
+    if @isConnected()
+      onReadyCallback(channel, callback)
+    else
+      Sync.onReady(onReadyCallback)
+
+  onConnect: ->
+    Sync.flushReadyQueue()
+    Sync.bindUnsubscribe()
 
 
 class Sync.Faye extends Sync.Adapter
-
   subscriptions: []
 
   available: ->
@@ -126,8 +149,8 @@ class Sync.Pusher extends Sync.Adapter
     !!window.Pusher
 
   connect: ->
-    opts =
-      encrypted: SyncConfig.pusher_encrypted
+    # Pusher doesn't properly transform native boolean flags in options.
+    opts = { encrypted: SyncConfig.encryption_flag.toString() }
 
     opts.wsHost = SyncConfig.pusher_ws_host if SyncConfig.pusher_ws_host
     opts.wsPort = SyncConfig.pusher_ws_port if SyncConfig.pusher_ws_port
@@ -136,12 +159,6 @@ class Sync.Pusher extends Sync.Adapter
     @client = new window.Pusher(SyncConfig.api_key, opts)
 
   isConnected: -> @client?.connection.state is "connected"
-
-  subscribe: (channel, callback) ->
-    @unsubscribeChannel(channel)
-    subscription = new Sync.Pusher.Subscription(@client, channel, callback)
-    @subscriptions.push(subscription)
-    subscription
 
 
 class Sync.Pusher.Subscription
@@ -153,6 +170,60 @@ class Sync.Pusher.Subscription
 
   cancel: ->
     @client.unsubscribe(@channel) if @client.channel(@channel)?
+
+class Sync.Stomp extends Sync.Adapter
+
+  subscriptions: []
+
+  client: null
+  socket: null
+
+  headers: {
+    login: SyncConfig.api_key,
+    passcode: SyncConfig.auth_token
+  }
+
+  available: ->
+    !!window.Stomp
+
+  connect: ->
+    @socket = new window.SockJS(SyncConfig.websocket)
+    @client = window.Stomp.over(@socket)
+
+    # SockJS does not support heart-beat: disable heart-beats
+    @client.heartbeat.outgoing = 0
+    @client.heartbeat.incoming = 0
+    @client.debug = Sync.onDebug if SyncConfig.debug_flag
+
+    @client.connect(
+      @headers['login'],
+      @headers['passcode'],
+      @onConnect,
+      @onError,
+      '/'
+    )
+
+  onError: (error) ->
+    console.log({ error: error })
+
+  isConnected: ->
+    try
+      @client.connected
+    catch error
+      false
+
+
+class Sync.Stomp.Subscription
+  constructor: (client, channel, callback) ->
+    @channel = channel
+    @client = client
+    # @subscription = @client.subscribe(channel, callback)
+    @subscription = @client.subscribe channel, ( (e) ->
+      callback(JSON.parse(e.body))
+    )
+
+  cancel: ->
+    @subscription.unsubscribe()
 
 
 class Sync.View

@@ -27,6 +27,7 @@ require 'sync/channel'
 require 'sync/resource'
 require 'sync/clients/faye'
 require 'sync/clients/pusher'
+require 'sync/clients/stomp'
 require 'sync/clients/dummy'
 require 'sync/reactor'
 if defined? Rails
@@ -46,13 +47,16 @@ module Sync
     def config_json
       @config_json ||= begin
         {
-          server: server,
+          adapter: adapter,
           api_key: api_key,
+          auth_token: auth_token,
+          debug_flag: debug_flag,
+          encryption_flag: encryption_flag,
           pusher_ws_host: pusher_ws_host,
           pusher_ws_port: pusher_ws_port,
           pusher_wss_port: pusher_wss_port,
-          pusher_encrypted: pusher_encrypted,
-          adapter: adapter
+          server: server,
+          websocket: websocket
         }.reject { |k, v| v.nil? }.to_json
       end
     end
@@ -101,6 +105,16 @@ module Sync
       config[:server]
     end
 
+    def websocket
+      config[:websocket]
+    end
+
+    def destination
+      config[:destination] ||= '/'
+      return "/#{config[:destination]}" unless config[:destination][0] == '/'
+      config[:destination]
+    end
+
     def adapter_javascript_url
       config[:adapter_javascript_url]
     end
@@ -145,12 +159,17 @@ module Sync
       config[:pusher_wss_port]
     end
 
-    def pusher_encrypted
-      if config[:pusher_encrypted].nil?
+    def encryption_flag
+      if config[:encryption].nil?
         true
       else
-        config[:pusher_encrypted]
+        config[:encryption]
       end
+    end
+
+    def debug_flag
+      return config[:debug] unless config.fetch(:debug, nil).nil?
+      defined?(::Rails) && !::Rails.env.production?
     end
 
     def reactor

@@ -15,6 +15,17 @@ development:
 #   adapter: "Pusher"
 #   async: true
 
+# Stomp
+# development:
+#   server: 'stomp://YOUR_STOMP_SERVER_LOGIN:YOUR_STOMP_SERVER_PASSCODE@HOST:STOMP_PORT'
+#   api_key: 'YOUR_STOMP_CLIENT_LOGIN'
+#   auth_token: 'YOUR_STOMP_CLIENT_PASSCODE'
+#   adapter: 'Stomp'
+#   encryption: false
+#   async: true
+#   websocket: 'http://HOST:WEBSOCKET_PORT/stomp'
+#   destination: '/topic/sync'
+
 # Disabled
 # development:
 #   adapter: false

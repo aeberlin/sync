@@ -40,10 +40,10 @@ describe "Faye" do
   describe "asynchronous publishing" do
     include EM::MiniTest::Spec
 
-    before do 
+    before do
       Sync.stubs(:async?).returns true
     end
-  
+
     describe "batched message publishing" do
       before do
         @messages = 10.times.collect{|i| Sync.client.build_message("/ch#{i}", {html: ""})}
@@ -64,7 +64,7 @@ describe "Faye" do
   end
 
   describe "synchronous publishing" do
-    before do 
+    before do
       Net::HTTP.stubs(:post_form).returns true
       Sync.stubs(:async?).returns false
     end
@@ -112,10 +112,10 @@ describe "Pusher" do
   describe "asynchronous publishing" do
     include EM::MiniTest::Spec
 
-    before do 
+    before do
       Sync.stubs(:async?).returns true
     end
-  
+
     describe "batched message publishing" do
       before do
         @messages = 10.times.collect{|i| Sync.client.build_message("/ch#{i}", {html: ""})}
@@ -135,7 +135,7 @@ describe "Pusher" do
   end
 
   describe "synchronous publishing" do
-    before do 
+    before do
       Pusher.stubs(:trigger).returns(true)
       Sync.stubs(:async?).returns false
     end
@@ -157,3 +157,39 @@ describe "Pusher" do
   end
 end
 
+
+describe "Stomp" do
+  include TestHelperStomp
+
+  before do
+    @message = Sync.client.build_message("foo-bar", html: "<p>Some Data</p>")
+  end
+
+  describe "normalize_channel" do
+    it 'converts channel to stomp friendly format' do
+      assert Sync.client.normalize_channel("foo-bar") =~ /^\/topic\/sync-/
+    end
+  end
+
+  describe '#to_json' do
+    it "Converts message to json for Stomp publish" do
+      assert @message.to_json
+    end
+  end
+
+  describe "asynchronous publishing" do
+    include EM::MiniTest::Spec
+
+    before do
+      Sync.stubs(:publish).returns true
+      Sync.stubs(:async?).returns true
+    end
+
+    describe '#publish' do
+      it 'Publishes a message to Stomp' do
+        Sync.reactor.expects(:perform).once
+        @message.publish
+      end
+    end
+  end
+end

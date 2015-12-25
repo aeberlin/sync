@@ -65,4 +65,13 @@ module TestHelperPusher
   end
 end
 
+module TestHelperStomp
 
+  def setup
+    Sync.load_config(
+      File.expand_path("../fixtures/sync_stomp.yml", __FILE__),
+      "test"
+    )
+    Sync.logger.level = ENV['LOGLEVEL'].present? ? ENV['LOGLEVEL'].to_i : 1
+  end
+end

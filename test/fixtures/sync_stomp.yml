@@ -1,0 +1,10 @@
+# Stomp
+test:
+  server: 'stomp://guest:guest@localhost:61613'
+  api_key: 'guest'
+  auth_token: 'guest'
+  adapter: 'Stomp'
+  encryption: false
+  async: true
+  websocket: 'http://localhost:15674/stomp'
+  destination: '/topic/sync-'
