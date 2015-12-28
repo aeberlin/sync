@@ -59,6 +59,13 @@ gem 'pusher'
 gem 'sync'
 ```
 
+#### Using STOMP
+
+```ruby
+gem 'stomp'
+gem 'sync'
+```
+
 #### Install
 
 ```bash
@@ -78,10 +85,15 @@ $ rails g sync:install
 <%= include_sync_config %>
 ```
 
-#### 4) Configure your pubsub server (Faye or Pusher)
+> NOTE: If you have multiple adapter_javascript_url that you need to include, such as in the STOMP example config below, use the following instead:
 
+```erb
+<%= javascript_include_tag *Sync.adapter_javascript_url %>
+```
 
-#### Using [Faye](http://faye.jcoglan.com/) (self hosted)
+#### 4) Configure your pubsub server (Faye, Pusher, or STOMP)
+
+#### Using [Faye](http://faye.jcoglan.com/) (self-hosted)
 
 Set your configuration in the generated `config/sync.yml` file, using the Faye adapter. Then run Faye alongside your app.
 
@@ -92,6 +104,34 @@ rackup sync.ru -E production
 #### Using [Pusher](http://pusher.com) (SaaS)
 
 Set your configuration in the generated `config/sync.yml` file, using the Pusher adapter. No extra process/setup.
+
+#### Using [STOMP](https://stomp.github.io) with [RabbitMQ](https://www.rabbitmq.com) (self-hosted)
+
+> NOTE: Sync will probably play nicely with other STOMP servers besides RabbitMQ, but these have not been tested and are not guaranteed to be supported.
+
+- Install [RabbitMQ](https://www.rabbitmq.com/download.html).
+- Start the RabbitMQ server (see your installation guide in link above).
+- Enable the RabbitMQ STOMP plugin: `rabbitmq-plugins enable rabbitmq_web_stomp` ([see page](https://www.rabbitmq.com/stomp.html))
+- Set your configuration in the generated `config/sync.yml` file, using the Stomp adapter. Ensure the default `amq.topic` exchange is available on your RabbitMQ instance (although experienced users may adjust the `websocket` and `destination` endpoints to suit their needs).
+- The Stomp adapter needs access to vendor javascript assets for [`sockjs-client`](https://github.com/sockjs/sockjs-client) and [`stomp-websocket`](https://github.com/jmesnil/stomp-websocket). Either add them to your asset pipeline, and require them in your `application.js` manifest *before* the `//= require sync` declaration, or handle their inclusion in your layout as laid out in [Step #3](#3-add-the-pubsub-adapters-javascript-to-your-application-layout-appviewslayoutsapplicationhtmlerb).
+
+An example configuration for RabbitMQ servers (local, out-of-box, and STOMP-enabled):
+```yaml
+# config/sync.yml
+
+development:
+  adapter_javascript_url:
+    - 'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.3/sockjs.js'
+    - 'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js'
+  server: 'stomp://guest:guest@localhost:61613'
+  api_key: 'guest'
+  auth_token: 'guest'
+  adapter: 'Stomp'
+  encryption: false
+  async: true
+  websocket: 'http://localhost:15674/stomp'
+  destination: '/topic/sync-'
+```
 
 ## Current Caveats
 The current implementation uses a DOM range query (jQuery's `nextUntil`) to match your partial's "element" in

@@ -1,5 +1,8 @@
 # Stomp
 test:
+  adapter_javascript_url:
+    - 'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.3/sockjs.js'
+    - 'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js'
   server: 'stomp://guest:guest@localhost:61613'
   api_key: 'guest'
   auth_token: 'guest'

@@ -17,6 +17,9 @@ development:
 
 # Stomp
 # development:
+#   adapter_javascript_url:
+#     - 'https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.3/sockjs.js'
+#     - 'https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js'
 #   server: 'stomp://YOUR_STOMP_SERVER_LOGIN:YOUR_STOMP_SERVER_PASSCODE@HOST:STOMP_PORT'
 #   api_key: 'YOUR_STOMP_CLIENT_LOGIN'
 #   auth_token: 'YOUR_STOMP_CLIENT_PASSCODE'
