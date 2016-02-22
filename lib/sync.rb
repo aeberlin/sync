@@ -160,7 +160,6 @@ module Sync
     end
 
     def encryption_flag
-      return true if config[:encryption].nil?
       config[:encryption]
     end
 
