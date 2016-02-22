@@ -163,17 +163,6 @@ class Sync.Pusher extends Sync.Adapter
 
   isConnected: -> @client?.connection.state is "connected"
 
-
-class Sync.Pusher.Subscription
-  constructor: (@client, channel, callback) ->
-    @channel = channel
-
-    pusherSub = @client.subscribe(channel)
-    pusherSub.bind 'sync', callback
-
-  cancel: ->
-    @client.unsubscribe(@channel) if @client.channel(@channel)?
-
 class Sync.Stomp extends Sync.Adapter
 
   subscriptions: []
@@ -212,6 +201,16 @@ class Sync.Stomp extends Sync.Adapter
       @client.connected
     catch error
       false
+
+class Sync.Pusher.Subscription
+  constructor: (@client, channel, callback) ->
+    @channel = channel
+
+    pusherSub = @client.subscribe(channel)
+    pusherSub.bind 'sync', callback
+
+  cancel: ->
+    @client.unsubscribe(@channel) if @client.channel(@channel)?
 
 class Sync.Stomp.Subscription
   constructor: (client, channel, callback) ->
