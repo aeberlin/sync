@@ -160,16 +160,12 @@ module Sync
     end
 
     def encryption_flag
-      if config[:encryption].nil?
-        true
-      else
-        config[:encryption]
-      end
+      return true if config[:encryption].nil?
+      config[:encryption]
     end
 
     def debug_flag
-      return config[:debug] unless config.fetch(:debug, nil).nil?
-      defined?(::Rails) && !::Rails.env.production?
+      config[:debug]
     end
 
     def reactor

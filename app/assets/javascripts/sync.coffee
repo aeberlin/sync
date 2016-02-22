@@ -118,6 +118,9 @@ class Sync.Adapter
     Sync.flushReadyQueue()
     Sync.bindUnsubscribe()
 
+  onError: (error) ->
+    window?.console?.log({ error: error })
+
 
 class Sync.Faye extends Sync.Adapter
   subscriptions: []
@@ -190,10 +193,11 @@ class Sync.Stomp extends Sync.Adapter
     @socket = new window.SockJS(SyncConfig.websocket)
     @client = window.Stomp.over(@socket)
 
+    @client.debug = Sync.onDebug if SyncConfig.debug_flag
+
     # SockJS does not support heart-beat: disable heart-beats
     @client.heartbeat.outgoing = 0
     @client.heartbeat.incoming = 0
-    @client.debug = Sync.onDebug if SyncConfig.debug_flag
 
     @client.connect(
       @headers['login'],
@@ -203,15 +207,11 @@ class Sync.Stomp extends Sync.Adapter
       '/'
     )
 
-  onError: (error) ->
-    console.log({ error: error })
-
   isConnected: ->
     try
       @client.connected
     catch error
       false
-
 
 class Sync.Stomp.Subscription
   constructor: (client, channel, callback) ->
