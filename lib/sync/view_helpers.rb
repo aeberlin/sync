@@ -30,20 +30,25 @@ module Sync
         end
         results << "
           <script type='text/javascript' data-sync-id='#{partial.selector_start}'>
-            Sync.onReady(function(){
-              var partial = new Sync.Partial({
-                name:           '#{partial.name}',
-                resourceName:   '#{partial.resource.name}',
-                resourceId:     '#{resource.id}',
-                authToken:      '#{partial.refetch_auth_token}',
-                channelUpdate:  '#{partial.channel_for_action(:update)}',
-                channelDestroy: '#{partial.channel_for_action(:destroy)}',
-                selectorStart:  '#{partial.selector_start}',
-                selectorEnd:    '#{partial.selector_end}',
-                refetch:        #{refetch}
-              });
-              partial.subscribe();
-            });
+            onReadyInterval = setInterval(function() {
+              try {
+                Sync.onReady(function(){
+                  clearInterval(onReadyInterval);
+                  var partial = new Sync.Partial({
+                    name:           '#{partial.name}',
+                    resourceName:   '#{partial.resource.name}',
+                    resourceId:     '#{resource.id}',
+                    authToken:      '#{partial.refetch_auth_token}',
+                    channelUpdate:  '#{partial.channel_for_action(:update)}',
+                    channelDestroy: '#{partial.channel_for_action(:destroy)}',
+                    selectorStart:  '#{partial.selector_start}',
+                    selectorEnd:    '#{partial.selector_end}',
+                    refetch:        #{refetch}
+                  });
+                  partial.subscribe();
+                });
+              } catch(ex) { null; }
+            }, 250);
           </script>
         ".squish.html_safe
         results << partial.render
@@ -88,17 +93,21 @@ module Sync
       end
       "
         <script type='text/javascript' data-sync-id='#{creator.selector}'>
-          Sync.onReady(function(){
-            var creator = new Sync.PartialCreator({
-              name:         '#{partial_name}',
-              resourceName: '#{creator.resource.name}',
-              channel:      '#{creator.channel}',
-              selector:     '#{creator.selector}',
-              direction:    '#{direction}',
-              refetch:      #{refetch}
+          onReadyInterval = setInterval(function() {
+            try {
+              Sync.onReady(function(){
+                clearInterval(onReadyInterval);
+              var creator = new Sync.PartialCreator({
+                name:         '#{partial_name}',
+                resourceName: '#{creator.resource.name}',
+                channel:      '#{creator.channel}',
+                selector:     '#{creator.selector}',
+                direction:    '#{direction}',
+                refetch:      #{refetch}
+              });
+              creator.subscribe();
             });
-            creator.subscribe();
-          });
+          }, 250);
         </script>
       ".html_safe
     end
