@@ -85,7 +85,7 @@ $ rails g sync:install
 <%= include_sync_config %>
 ```
 
-> NOTE: If you have multiple adapter_javascript_url that you need to include, such as in the STOMP example config below, use the following instead:
+> NOTE: If you have multiple adapter_javascript_url that you need to include, such as in the STOMP example config below, add the following after:
 
 ```erb
 <%= javascript_include_tag *Sync.adapter_javascript_url %>

@@ -216,7 +216,7 @@ class Sync.Stomp.Subscription
   constructor: (client, channel, callback) ->
     @channel = channel
     @client = client
-    # @subscription = @client.subscribe(channel, callback)
+
     @subscription = @client.subscribe channel, ( (e) ->
       callback(JSON.parse(e.body))
     )
