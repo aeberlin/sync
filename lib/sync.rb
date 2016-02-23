@@ -164,7 +164,7 @@ module Sync
     end
 
     def debug_flag
-      config[:debug]
+      !!config[:debug]
     end
 
     def reactor

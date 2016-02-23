@@ -44,6 +44,8 @@ $ = jQuery
   isConnected: -> @adapter.isConnected()
 
   onDebug: (message) ->
+    return unless SyncConfig.debug_flag
+
     window?.console?.log(message)
 
   onReady: (callbacks) ->
@@ -182,7 +184,7 @@ class Sync.Stomp extends Sync.Adapter
     @socket = new window.SockJS(SyncConfig.websocket)
     @client = window.Stomp.over(@socket)
 
-    @client.debug = Sync.onDebug if SyncConfig.debug_flag
+    @client.debug = Sync.onDebug
 
     # SockJS does not support heart-beat: disable heart-beats
     @client.heartbeat.outgoing = 0
